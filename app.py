@@ -1,87 +1,131 @@
+import streamlit as st
 import matplotlib.pyplot as plt
-import numpy as np
 
-# -----------------------------
-# Simulated drone flight path
-# -----------------------------
-
-drone_x = np.linspace(0, 10, 100)
-drone_y = 5 + 2 * np.sin(drone_x)
-
-# -----------------------------
-# Simulated magnetic field
-# -----------------------------
-
-x = np.linspace(0, 10, 100)
-y = np.linspace(0, 10, 100)
-
-X, Y = np.meshgrid(x, y)
-
-magnetic_field = 250 * np.ones_like(X)
-
-# Simulated metallic anomalies
-anomaly1 = 120 * np.exp(-((X - 3)*2 + (Y - 4)*2) / 0.5)
-anomaly2 = 180 * np.exp(-((X - 7)*2 + (Y - 6)*2) / 0.4)
-anomaly3 = 100 * np.exp(-((X - 8)*2 + (Y - 2)*2) / 0.5)
-
-magnetic_field += anomaly1 + anomaly2 + anomaly3
-
-# -----------------------------
-# Display dashboard
-# -----------------------------
-
-plt.figure(figsize=(12, 8))
-
-plt.contourf(
-    X,
-    Y,
-    magnetic_field,
-    levels=40
+st.set_page_config(
+    page_title="Drone Magnetic Anomaly Detection",
+    layout="wide"
 )
 
-plt.colorbar(label="Magnetic Field Strength")
+st.title("🚁 Drone-Based Magnetic Sensing System")
+st.write("Visual prototype for metallic anomaly detection")
 
-# Drone flight path
-plt.plot(
-    drone_x,
-    drone_y,
-    linestyle="--",
-    linewidth=2,
-    label="Drone Flight Path"
+st.subheader("Drone & Sensor Input")
+
+altitude = st.number_input(
+    "Drone altitude above ground (m)",
+    min_value=1.0,
+    value=20.0
 )
 
-# Detected anomalies
-anomaly_locations = [
-    (3, 4),
-    (7, 6),
-    (8, 2)
-]
-
-for ax, ay in anomaly_locations:
-    plt.scatter(
-        ax,
-        ay,
-        marker="X",
-        s=180,
-        label="Detected Metallic Anomaly"
-    )
-
-plt.title(
-    "Drone-Based Intelligent Magnetic Sensing System"
+magnetic_value = st.number_input(
+    "Magnetic field reading (µT)",
+    min_value=0.0,
+    value=85.0
 )
 
-plt.xlabel("Survey Area X")
-plt.ylabel("Survey Area Y")
-
-plt.legend()
-
-plt.text(
-    0.5,
-    10.5,
-    "DRONE STATUS: ACTIVE   |   ANOMALIES DETECTED: 3",
-    fontsize=12
+threshold = st.number_input(
+    "Detection threshold (µT)",
+    min_value=0.0,
+    value=60.0
 )
 
-plt.tight_layout()
+scan_distance = st.number_input(
+    "Scan distance (m)",
+    min_value=1.0,
+    value=50.0
+)
 
-plt.show()
+if st.button("🔍 DETECT ANOMALY"):
+
+    st.subheader("Detection Result")
+
+    if magnetic_value > threshold:
+
+        st.error("⚠️ METALLIC ANOMALY DETECTED")
+
+        st.write(f"*Drone altitude:* {altitude} m")
+        st.write(f"*Magnetic field:* {magnetic_value} µT")
+        st.write(f"*Threshold:* {threshold} µT")
+        st.write(f"*Scan distance:* {scan_distance} m")
+
+        st.success("Anomalous magnetic field detected below the drone.")
+
+        # Visual representation
+        fig, ax = plt.subplots(figsize=(10, 5))
+
+        ax.set_xlim(0, scan_distance)
+        ax.set_ylim(-10, altitude + 10)
+
+        # Ground
+        ax.axhline(0, linewidth=3)
+
+        # Drone
+        drone_x = scan_distance / 2
+        ax.scatter(drone_x, altitude, s=500, marker="^")
+        ax.text(
+            drone_x,
+            altitude + 2,
+            "DRONE",
+            ha="center"
+        )
+
+        # Anomaly
+        anomaly_x = drone_x
+        anomaly_depth = -5
+
+        ax.scatter(
+            anomaly_x,
+            anomaly_depth,
+            s=300,
+            marker="X"
+        )
+
+        ax.text(
+            anomaly_x + 2,
+            anomaly_depth,
+            "METALLIC\nANOMALY",
+            va="center"
+        )
+
+        ax.set_xlabel("Scan distance (m)")
+        ax.set_ylabel("Height / depth (m)")
+        ax.set_title("Drone Magnetic Anomaly Visualization")
+
+        st.pyplot(fig)
+
+    else:
+
+        st.success("✅ NO METALLIC ANOMALY DETECTED")
+
+        st.write(f"*Drone altitude:* {altitude} m")
+        st.write(f"*Magnetic field:* {magnetic_value} µT")
+        st.write(f"*Threshold:* {threshold} µT")
+
+        fig, ax = plt.subplots(figsize=(10, 5))
+
+        ax.set_xlim(0, scan_distance)
+        ax.set_ylim(-10, altitude + 10)
+
+        ax.axhline(0, linewidth=3)
+
+        drone_x = scan_distance / 2
+
+        ax.scatter(
+            drone_x,
+            altitude,
+            s=500,
+            marker="^"
+        )
+
+        ax.text(
+            drone_x,
+            altitude + 2,
+            "DRONE",
+            ha="center"
+        )
+
+        ax.set_xlabel("Scan distance (m)")
+        ax.set_ylabel("Height / depth (m)")
+        ax.set_title("Drone Scan — No Anomaly Detected")
+
+        st.pyplot(fig)
